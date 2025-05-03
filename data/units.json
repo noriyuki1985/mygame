@@ -1,0 +1,14 @@
+{
+    "hero": {
+      "id": "hero",
+      "name": "英雄",
+      "maxHp": 50,
+      "attack": 3,
+      "move": 1,
+      "range": [1, 1],
+      "sprite": "assets/images/units/hero.png",
+      "type": "hero",
+      "description": "高い耐久力を誇るリーダーユニット。攻撃力・移動力は低い。"
+    }
+  }
+  
