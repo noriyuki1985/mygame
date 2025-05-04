@@ -1,46 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>タクティカルPvPバトル</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>Mini Tactics</title>
+
+  <!-- 盤面と UI のスタイル -->
   <link rel="stylesheet" href="style/main.css" />
 </head>
 <body>
-  <div id="app">
-    <!-- ヘッダー -->
-    <header id="game-header">
-      <h1>タクティカルバトル</h1>
-    </header>
 
-    <!-- メインコンテナ -->
-    <main id="game-container">
-      <!-- マップ描画エリア -->
-      <div id="map-area"></div>
+  <!-- タイトル（任意） -->
+  <h1>Mini&nbsp;Tactics</h1>
 
-      <!-- UIパネル -->
-      <div id="ui-panel">
-        <div id="turn-indicator">ターン: プレイヤー1</div>
-        <div id="unit-info">選択中のユニット情報がここに表示されます</div>
+  <!-- ── 盤面コンテナ ──────────────────────────────── -->
+  <div id="mapArea"></div>
 
-        <!-- モード切替ボタン -->
-        <div id="mode-buttons">
-          <button id="move-mode-button" class="mode-button active">移動モード</button>
-          <button id="attack-mode-button" class="mode-button">攻撃モード</button>
-        </div>
+  <!-- ── ログ表示 ────────────────────────────────── -->
+  <div id="log" style="min-height:1.5rem;">ログ：ゲーム開始前</div>
 
-        <!-- ターン終了ボタン -->
-        <button id="end-turn-button">ターン終了</button>
-      </div>
-    </main>
-
-    <!-- フッター（ログ表示） -->
-    <footer id="game-footer">
-      <div id="log">ログ：ゲーム開始</div>
-    </footer>
-  </div>
-
-  <!-- メインスクリプト -->
+  <!-- エントリポイント。type="module" で defer 相当 -->
   <script type="module" src="scripts/main.js"></script>
 </body>
 </html>
