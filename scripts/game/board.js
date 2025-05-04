@@ -1,115 +1,120 @@
-// scripts/game/board.js
-
-import { loadMap } from '../data/mapLoader.js';
-import { getReachableCells } from './movement.js';
+/* ------------------------------------------------------------
+ * scripts/game/board.js
+ * 盤面（グリッド）描画とハイライト操作系ユーティリティ
+ * ---------------------------------------------------------- */
 
 /**
- * マップを描画する
- * @param {HTMLElement} container - マップ描画エリア要素 (#map-area)
- * @returns {Promise<void>}
+ * グリッド（タイル）を描画する。呼び出すたびに中身を全クリアして再構築。
+ * container は CSS で `display:grid` にしておくこと。
+ *
+ * @param {HTMLElement} container  盤面を入れる DOM 要素
+ * @param {number}      width      タイル横幅（デフォルト 8）
+ * @param {number}      height     タイル縦幅（デフォルト 8）
  */
-export async function renderMap(container) {
-  if (!(container instanceof HTMLElement)) {
-    throw new Error('renderMap: container が HTMLElement ではありません');
-  }
-
-  // マップデータ読み込み
-  const { width, height, tiles } = await loadMap();
-
-  // コンテナ初期化
+export function renderMap(container, width = 8, height = 8) {
+  // 既存ノードを全部除去
   container.innerHTML = '';
-  container.style.display = 'grid';
-  container.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
-  container.style.gridTemplateRows    = `repeat(${height}, 1fr)`;
 
-  // セル生成
-  tiles.forEach((row, y) => {
-    row.forEach((tileType, x) => {
+  // サイズを CSS カスタムプロパティで公開（グリッドテンプレート用）
+  container.style.setProperty('--grid-w', width);
+  container.style.setProperty('--grid-h', height);
+
+  // タイル生成
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
       const cell = document.createElement('div');
-      cell.className = `grid-cell tile-${tileType}`;
-      cell.dataset.x = x.toString();
-      cell.dataset.y = y.toString();
+      cell.className  = 'grid-cell';
+      cell.dataset.x  = x;
+      cell.dataset.y  = y;
       container.appendChild(cell);
-    });
-  });
-}
-
-/**
- * 移動可能マスをハイライトする
- * @param {HTMLElement} container - マップ描画エリア要素 (#map-area)
- * @param {number} startX - 起点 X 座標
- * @param {number} startY - 起点 Y 座標
- * @param {number} move - 移動力
- * @returns {Promise<void>}
- */
-export async function highlightMovement(container, startX, startY, move) {
-  if (!(container instanceof HTMLElement)) {
-    throw new Error('highlightMovement: container が HTMLElement ではありません');
+    }
   }
-  const { width, height } = await loadMap();
-  const reachableCells = getReachableCells(startX, startY, move, width, height);
-
-  reachableCells.forEach(({ x, y }) => {
-    const selector = `.grid-cell[data-x=\"${x}\"][data-y=\"${y}\"]`;
-    const cell = container.querySelector(selector);
-    if (cell) cell.classList.add('highlight-move');
-  });
 }
 
 /**
- * 既存のハイライトをすべてクリアする
- * @param {HTMLElement} container - マップ描画エリア要素 (#map-area)
+ * container 内の (x,y) タイル DOM を取得。
+ * @param {HTMLElement} container
+ * @param {number}      x
+ * @param {number}      y
+ * @returns {HTMLElement|null}
+ */
+export function getCell(container, x, y) {
+  return container.querySelector(
+    `.grid-cell[data-x="${x}"][data-y="${y}"]`
+  );
+}
+
+/**
+ * (startX,startY) から移動力 move 以内で到達可能なセルをハイライトする。
+ * 移動経路はマンハッタン距離で計算（障害物・地形コストは未考慮）。
+ * 既存ハイライトは自動で消去。戻り値として到達可能セル配列を返却。
+ *
+ * @param {HTMLElement} container  盤面 DOM
+ * @param {number}      startX
+ * @param {number}      startY
+ * @param {number}      move       移動力（0 以上整数）
+ * @returns {{x:number,y:number}[]} 到達可能セル座標リスト
+ */
+export function highlightMovement(container, startX, startY, move) {
+  clearHighlights(container);
+
+  const width  = parseInt(getComputedStyle(container).getPropertyValue('--grid-w')) || 8;
+  const height = parseInt(getComputedStyle(container).getPropertyValue('--grid-h')) || 8;
+
+  /** @type {{x:number,y:number}[]} */
+  const reachable = [];
+
+  for (let dy = -move; dy <= move; dy++) {
+    for (let dx = -move; dx <= move; dx++) {
+      const dist = Math.abs(dx) + Math.abs(dy);
+      if (dist === 0 || dist > move) continue;
+
+      const x = startX + dx;
+      const y = startY + dy;
+      if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+      reachable.push({ x, y });
+    }
+  }
+
+  // CSS クラス付与
+  reachable.forEach(({ x, y }) => {
+    const cell = getCell(container, x, y);
+    cell?.classList.add('highlight-move');
+  });
+
+  return reachable;
+}
+
+/**
+ * 盤面上のハイライト（移動／攻撃／経路）をすべて除去する。
+ * @param {HTMLElement} container
  */
 export function clearHighlights(container) {
-  if (!(container instanceof HTMLElement)) {
-    throw new Error('clearHighlights: container が HTMLElement ではありません');
-  }
-  container.querySelectorAll('.highlight-move').forEach(cell => {
-    cell.classList.remove('highlight-move');
-  });
+  container
+    .querySelectorAll('.highlight-move, .highlight-attack, .highlight-path')
+    .forEach(el =>
+      el.classList.remove(
+        'highlight-move',
+        'highlight-attack',
+        'highlight-path'
+      )
+    );
 }
 
-
-// scripts/game/unitRenderer.js
-
 /**
- * テスト用プレースホルダーでユニットを描画する
- * 敵味方を△▽で区別し、色は青(味方)/赤(敵)
- * @param {HTMLElement} container - マップ描画エリア要素 (#map-area)
- * @param {Array} instances - UnitInstance[]
- * @param {Object} defs - Record<string, UnitDef>
+ * ユニットが載っているセルに選択枠を付ける。
+ * null を渡すと全選択解除。
+ *
+ * @param {HTMLElement|null} cellEl  対象セル要素
  */
-export function renderUnits(container, instances, defs) {
-  if (!(container instanceof HTMLElement)) {
-    throw new Error('renderUnits: container が HTMLElement ではありません');
-  }
-  if (!Array.isArray(instances)) {
-    throw new Error('renderUnits: instances は配列である必要があります');
-  }
+export function highlightUnit(cellEl) {
+  const board = cellEl ? cellEl.parentElement : null;
+  if (!board) return;
 
-  instances.forEach(inst => {
-    const def = defs[inst.type];
-    if (!def) {
-      console.warn(`renderUnits: 定義が見つかりません type=${inst.type}`);
-      return;
-    }
+  board
+    .querySelectorAll('.unit-selected')
+    .forEach(el => el.classList.remove('unit-selected'));
 
-    // プレースホルダー要素作成
-    const el = document.createElement('div');
-    const char = inst.owner === 1 ? '△' : '▽';
-    const cls  = inst.owner === 1 ? 'unit-ally' : 'unit-enemy';
-    el.textContent = char;
-    el.classList.add('unit-sprite', cls);
-
-    // Grid の行列指定（1始まり）
-    el.style.gridColumnStart = (inst.x + 1).toString();
-    el.style.gridRowStart    = (inst.y + 1).toString();
-    // データ属性
-    el.dataset.instanceId = inst.instanceId;
-    el.dataset.owner      = inst.owner.toString();
-    el.dataset.hp         = inst.hp.toString();
-    el.dataset.maxHp      = def.maxHp.toString();
-
-    container.appendChild(el);
-  });
+  cellEl?.classList.add('unit-selected');
 }

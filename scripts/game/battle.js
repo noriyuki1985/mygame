@@ -41,7 +41,7 @@ export function attackUnit(attacker, defender, mapArea) {
     defender.hp -= damage;
   
     // スプライト操作
-    const selector = `img.unit-sprite[data-instance-id="${defender.instanceId}"]`;
+    const selector = `.unit-sprite[data-instance-id="${defender.instanceId}"]`;
     const sprite = mapArea.querySelector(selector);
     if (defender.hp <= 0) {
       // 死亡時：画面上のスプライトを削除
@@ -57,4 +57,3 @@ export function attackUnit(attacker, defender, mapArea) {
   
     return { damage, killed: defender.hp <= 0 };
   }
-  
