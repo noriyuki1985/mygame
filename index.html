@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>Mini Tactics — Modular Build</title>
+
+  <!-- 盤面 & UI スタイル -->
+  <link rel="stylesheet" href="style/main.css" />
+</head>
+<body>
+
+  <h1>Mini Tactics</h1>
+
+  <!-- 操作ログ（クリックでパス可能） -->
+  <div id="log" style="min-height:1.6rem;">ロード中…</div>
+
+  <!-- 盤面 -->
+  <div id="mapArea"></div>
+
+  <!-- エントリポイント（ES-module） -->
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
