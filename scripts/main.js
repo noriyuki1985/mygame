@@ -1,184 +1,125 @@
-// scripts/main.js
+/* ------------------------------------------------------------
+ * scripts/main.js  – 1ターン1行動 & HPバー常時表示 (最終版)
+ * ---------------------------------------------------------- */
+import {
+  renderMap, getCell, highlightMovement,
+  clearHighlights, highlightUnit
+} from './game/board.js';
 
-import { renderMap, highlightMovement, clearHighlights } from './game/board.js';
-import { renderUnits } from './game/unitRenderer.js';
-import { loadMap } from './data/mapLoader.js';
-import { loadUnitDefs } from './data/unitLoader.js';
-import { attackUnit } from './game/battle.js';
+/* === 1. 定数 / ユニット定義 === */
+const MAP_W=8, MAP_H=8;
+const ASSET='assets/sprites/';
 
-window.addEventListener('DOMContentLoaded', async () => {
-  // DOM要素取得
-  const mapArea           = document.getElementById('map-area');
-  const turnIndicator     = document.getElementById('turn-indicator');
-  const unitInfo          = document.getElementById('unit-info');
-  const moveModeButton    = document.getElementById('move-mode-button');
-  const attackModeButton  = document.getElementById('attack-mode-button');
-  const endTurnButton     = document.getElementById('end-turn-button');
-  const logEl             = document.getElementById('log');
+const UNIT={
+  p1:{name:'Hero',      sprite:'hero_ally.png',  ph:'△', move:2,range:1,atk:5,maxHp:20},
+  p2:{name:'EnemyHero', sprite:'hero_enemy.png', ph:'▽', move:2,range:1,atk:5,maxHp:20}
+};
+let units=[
+  {id:'P1',owner:1,x:3,y:7,def:UNIT.p1,hp:20,moved:false},
+  {id:'P2',owner:2,x:3,y:0,def:UNIT.p2,hp:20,moved:false}
+];
 
-  // ゲーム状態
-  let mapData;
-  let unitDefs;
-  let units;
-  let currentPlayer = 1;
-  let selectedUnit = null;
-  let mode = 'move'; // 'move' or 'attack'
+/* === 2. 状態 === */
+let turn=1, sel=null, reach=[], atkList=[];
 
-  try {
-    log('ゲーム初期化中...', logEl);
+/* === 3. DOM === */
+const board=document.getElementById('mapArea');
+const log  =document.getElementById('log');
 
-    // マップ描画
-    await renderMap(mapArea);
-    log('マップ描画完了', logEl);
+/* === 4. 補助 === */
+const uAt=(x,y)=>units.find(u=>u.x===x&&u.y===y)||null;
+const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+const enemy=u=>u.owner!==turn;
 
-    // データ読み込み
-    mapData  = await loadMap();
-    unitDefs = await loadUnitDefs();
+/* === 5. 描画 === */
+function drawUnits(){
+  /* 既存アイコン & HPバーを全削除 */
+  board.querySelectorAll('.unit-sprite,.hp-wrapper').forEach(e=>e.remove());
 
-    // ユニット描画
-    renderUnits(mapArea, mapData.units, unitDefs);
+  units.forEach(u=>{
+    const cell=getCell(board,u.x,u.y);
 
-    // ユニット状態初期化
-    units = mapData.units.map(inst => ({
-      instanceId: inst.instanceId,
-      type:       inst.type,
-      def:        unitDefs[inst.type],
-      owner:      inst.owner,
-      x:          inst.x,
-      y:          inst.y,
-      hp:         unitDefs[inst.type].maxHp
-    }));
+    /* --- アイコン --- */
+    const icon=document.createElement('div');
+    icon.className=`unit-sprite owner-${u.owner}`;
+    icon.dataset.id=u.id;
 
-    updateTurnIndicator(currentPlayer, turnIndicator);
-    log(`プレイヤー${currentPlayer}のターン開始`, logEl);
+    const img=document.createElement('img');
+    img.src=ASSET+u.def.sprite; img.alt=u.def.name;
+    img.onerror=()=>{img.remove(); icon.textContent=u.def.ph};
+    icon.appendChild(img);
+    cell.appendChild(icon);
 
-  } catch (error) {
-    console.error(error);
-    alert('初期化エラー: ' + error.message);
+    /* --- HPバー --- */
+    const wrap=document.createElement('div');
+    wrap.className=`hp-wrapper ${u.owner===1?'hp-bottom':'hp-top'}`;
+    const bar=document.createElement('div');
+    bar.className='hp-value';
+    const r=u.hp/u.def.maxHp;
+    bar.style.width=`${r*100}%`;
+    if(r<=.25) bar.style.background='#e74c3c';
+    else if(r<=.5) bar.style.background='#f39c12';
+    wrap.appendChild(bar);
+    cell.appendChild(wrap);
+  });
+}
+
+/* === 6. 攻撃候補ハイライト === */
+function hiAtk(selU){
+  atkList=[];
+  units.forEach(e=>{
+    if(enemy(e)&&dist(selU,e)<=selU.def.range){
+      const c=getCell(board,e.x,e.y);
+      c.classList.add('highlight-attack');
+      atkList.push(e.id);
+    }
+  });
+}
+
+/* === 7. 選択解除 === */
+function clearSel(){sel=null;highlightUnit(null);atkList=[]}
+
+/* === 8. ターン交替 === */
+function endTurn(){
+  turn=turn===1?2:1;
+  units.forEach(u=>{if(u.owner===turn)u.moved=false});
+  clearHighlights(board); clearSel(); reach=[];
+  log.textContent=`ログ：プレイヤー${turn} のターン`;
+}
+
+/* === 9. 盤面クリック === */
+board.addEventListener('click',e=>{
+  const cell=e.target.closest('.grid-cell'); if(!cell) return;
+  const x=+cell.dataset.x, y=+cell.dataset.y, hit=uAt(x,y);
+
+  /* 1) 選択 */
+  if(!sel){
+    if(hit&&hit.owner===turn&&!hit.moved){
+      sel=hit; highlightUnit(cell);
+      reach=highlightMovement(board,x,y,hit.def.move); hiAtk(hit);
+    }
     return;
   }
 
-  // モード切替ボタン設定
-  moveModeButton.addEventListener('click', () => {
-    mode = 'move';
-    moveModeButton.classList.add('active');
-    attackModeButton.classList.remove('active');
-    log('移動モード', logEl);
-    clearSelection();
-  });
-
-  attackModeButton.addEventListener('click', () => {
-    mode = 'attack';
-    attackModeButton.classList.add('active');
-    moveModeButton.classList.remove('active');
-    log('攻撃モード', logEl);
-    clearSelection();
-  });
-
-  // マップクリック処理
-  mapArea.addEventListener('click', event => {
-    const cell = event.target.closest('.grid-cell');
-    if (!cell) return;
-    const x = Number(cell.dataset.x);
-    const y = Number(cell.dataset.y);
-
-    // クリック位置のユニット取得
-    const clickedUnit = units.find(u => u.x === x && u.y === y);
-
-    // 自ユニット選択
-    if (clickedUnit && clickedUnit.owner === currentPlayer) {
-      clearHighlights(mapArea);
-      selectedUnit = clickedUnit;
-      selectUnitInfo(selectedUnit, unitInfo);
-      if (mode === 'move') {
-        highlightMovement(mapArea, selectedUnit.x, selectedUnit.y, selectedUnit.def.move);
-      }
-      return;
-    }
-
-    // 移動モード：移動処理
-    if (mode === 'move' && selectedUnit && !clickedUnit) {
-      const dist = Math.abs(selectedUnit.x - x) + Math.abs(selectedUnit.y - y);
-      if (dist <= selectedUnit.def.move) {
-        moveUnit(selectedUnit, x, y, mapArea);
-        log(`${selectedUnit.def.name} を (${x},${y}) へ移動`, logEl);
-      } else {
-        log('移動範囲外です', logEl);
-      }
-      clearHighlights(mapArea);
-      selectedUnit = null;
-      unitInfo.textContent = '';
-      return;
-    }
-
-    // 攻撃モード：攻撃処理
-    if (mode === 'attack' && selectedUnit && clickedUnit && clickedUnit.owner !== currentPlayer) {
-      const dist = Math.abs(selectedUnit.x - clickedUnit.x) + Math.abs(selectedUnit.y - clickedUnit.y);
-      const [minR, maxR] = selectedUnit.def.range;
-      if (dist >= minR && dist <= maxR) {
-        const { damage, killed } = attackUnit(selectedUnit, clickedUnit, mapArea);
-        log(`${selectedUnit.def.name} が ${clickedUnit.def.name} に ${damage} ダメージ`, logEl);
-        if (killed) {
-          units = units.filter(u => u.instanceId !== clickedUnit.instanceId);
-          checkVictory();
-        }
-      } else {
-        log('攻撃範囲外です', logEl);
-      }
-      selectedUnit = null;
-      unitInfo.textContent = '';
-    }
-  });
-
-  // ターン終了ボタン
-  endTurnButton.addEventListener('click', () => {
-    currentPlayer = currentPlayer === 1 ? 2 : 1;
-    updateTurnIndicator(currentPlayer, turnIndicator);
-    log(`プレイヤー${currentPlayer}のターン開始`, logEl);
-    clearHighlights(mapArea);
-    selectedUnit = null;
-    unitInfo.textContent = '';
-    moveModeButton.click();
-  });
-
-  // 以下ユーティリティ関数
-  function log(message, container) {
-    container.textContent = 'ログ：' + message;
+  /* 2) 攻撃 */
+  if(hit&&enemy(hit)){
+    if(!atkList.includes(hit.id)){alert('射程外');return;}
+    hit.hp-=sel.def.atk;
+    log.textContent=`ログ：${sel.def.name} が ${hit.def.name} に ${sel.def.atk} ダメージ`;
+    if(hit.hp<=0){units=units.filter(u=>u.id!==hit.id);log.textContent+='（撃破！）';}
+    drawUnits(); sel.moved=true; endTurn(); return;
   }
 
-  function updateTurnIndicator(player, el) {
-    el.textContent = `ターン: プレイヤー${player}`;
-  }
-
-  function selectUnitInfo(unit, el) {
-    el.textContent = `選択中: ${unit.def.name} (HP: ${unit.hp}/${unit.def.maxHp})`;
-  }
-
-  function moveUnit(unit, x, y, container) {
-    const selector = `.unit-sprite[data-instance-id="${unit.instanceId}"]`;
-    const sprite = container.querySelector(selector);
-    if (sprite) {
-      unit.x = x;
-      unit.y = y;
-      sprite.style.gridColumnStart = x + 1;
-      sprite.style.gridRowStart    = y + 1;
-    }
-  }
-
-  function clearSelection() {
-    clearHighlights(mapArea);
-    selectedUnit = null;
-    unitInfo.textContent = '';
-  }
-
-  function checkVictory() {
-    const heroes = units.filter(u => u.type === 'hero');
-    const p1 = heroes.some(u => u.owner === 1);
-    const p2 = heroes.some(u => u.owner === 2);
-    if (!p1 || !p2) {
-      const winner = p1 ? 1 : 2;
-      alert(`プレイヤー${winner}の勝利！`);
-      location.reload();
-    }
+  /* 3) 移動 */
+  if(!hit&&reach.some(p=>p.x===x&&p.y===y)){
+    sel.x=x; sel.y=y; sel.moved=true;
+    drawUnits();
+    log.textContent=`ログ：${sel.def.name} を (${x},${y}) へ移動`;
+    endTurn();
   }
 });
+
+/* === 10. 初期化 === */
+renderMap(board,MAP_W,MAP_H);
+drawUnits();
+log.textContent='ログ：ゲーム開始！（プレイヤー1 のターン）';
