@@ -1,0 +1,91 @@
+{
+  "Hero": {
+    "name": "Hero",
+    "jpName": "英雄",
+    "placeholder": ["△", "△"],
+    "sprite": ["hero_ally.png", "hero_enemy.png"],
+    "move": 3,
+    "minRange": 1,
+    "maxRange": 1,
+    "atk": 5,
+    "maxHp": 20
+  },
+  "Archer": {
+    "name": "Archer",
+    "jpName": "射手",
+    "placeholder": ["▲", "▲"],
+    "sprite": ["archer_ally.png", "archer_enemy.png"],
+    "move": 3,
+    "minRange": 2,
+    "maxRange": 2,
+    "atk": 4,
+    "maxHp": 12
+  },
+  "Soldier": {
+    "name": "Soldier",
+    "jpName": "ソルジャー",
+    "placeholder": ["○", "○"],
+    "sprite": ["soldier_ally.png", "soldier_enemy.png"],
+    "move": 4,
+    "minRange": 1,
+    "maxRange": 1,
+    "atk": 3,
+    "maxHp": 15
+  },
+  "Mage": {
+    "name": "Mage",
+    "jpName": "魔法使い",
+    "placeholder": ["◆", "◆"],
+    "sprite": ["mage_ally.png", "mage_enemy.png"],
+    "move": 3,
+    "minRange": 1,
+    "maxRange": 2,
+    "atk": 6,
+    "maxHp": 10
+  },
+  "ArmorKnight": {
+    "name": "ArmorKnight",
+    "jpName": "アーマーナイト",
+    "placeholder": ["■", "■"],
+    "sprite": ["armor_ally.png", "armor_enemy.png"],
+    "move": 2,
+    "minRange": 1,
+    "maxRange": 1,
+    "atk": 4,
+    "maxHp": 25
+  },
+  "Thief": {
+    "name": "Thief",
+    "jpName": "盗賊",
+    "placeholder": ["☓", "☓"],
+    "sprite": ["thief_ally.png", "thief_enemy.png"],
+    "move": 5,
+    "minRange": 1,
+    "maxRange": 1,
+    "atk": 2,
+    "maxHp": 12
+  },
+  "Cavalier": {
+    "name": "Cavalier",
+    "jpName": "ナイト",
+    "placeholder": ["♞", "♞"],
+    "sprite": ["cavalier_ally.png", "cavalier_enemy.png"],
+    "move": 5,
+    "minRange": 1,
+    "maxRange": 1,
+    "atk": 4,
+    "maxHp": 18
+  },
+  "Healer": {
+    "name": "Healer",
+    "jpName": "ヒーラー",
+    "placeholder": ["♡", "♡"],
+    "sprite": ["healer_ally.png", "healer_enemy.png"],
+    "move": 3,
+    "minRange": 1,
+    "maxRange": 1,
+    "atk": 0,
+    "heal": 5,
+    "maxHp": 14
+  }
+}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Tactics</title>
+
+  <!-- 盤面 & UI スタイル -->
+  <link rel="stylesheet" href="style/main.css" />
+
+  <!-- ── 説明パネル用の軽量インライン CSS ─────────────────── -->
+  <style>
+    #howto{
+      max-width:780px;margin:0 auto 1.6rem;padding:1.2rem 1.6rem;
+      background:#f5f6fa;border:1px solid #d1d6e0;border-radius:8px;
+      line-height:1.6;font-size:.9rem;text-align:left
+    }
+    #howto h2{margin:.4rem 0 .7rem;font-size:1.1rem}
+    #howto ul{padding-left:1.2rem}
+    #howto li{margin-bottom:.35rem}
+    .keycap{display:inline-block;padding:0 .35em;border:1px solid #888;border-radius:.28em;
+      background:#fff;font-family:ui-monospace,monospace;font-size:.85em}
+    table.info{width:100%;border-collapse:collapse;font-size:.85rem;margin:.6rem 0}
+    .info th,.info td{border:1px solid #c8ccd4;padding:.4rem .5rem;text-align:center}
+    .info th{background:#e9ecf2}
+    .sym{font-size:1.25rem;font-weight:bold}
+
+    /* 軽い地形色サンプル (背景色だけ) */
+    .tile-swatch{width:1.6rem;height:1rem;display:inline-block;border:1px solid #999}
+    .plain   {background:#cfcfcf}
+    .forest  {background:#6ba368}
+    .mount   {background:#8a715e}
+    .hill    {background:#bfaa84}
+    .road    {background:#dcc8a3}
+    .fort    {background:#d6a2a2}
+  </style>
+</head>
+<body>
+
+  <h1>Mini&nbsp;Tactics</h1>
+
+  <!-- === 説明パネル =================================================== -->
+  <section id="howto">
+    <h2>ゲーム概要</h2>
+    <ul>
+      <li>青プレイヤー <strong>vs</strong> 赤AI の 8×8 タクティカルバトル。</li>
+      <li><strong>1 ターンにつき 2 アクション</strong>（移動／攻撃／回復）。</li>
+      <li>同じユニットで同一アクションを 2 連続では行えません。</li>
+      <li>各陣営<strong>3 ターンごと</strong>に自陣へ増援が 1 体出現します。</li>
+      <li><strong>勝敗条件</strong>：青ヒーローが倒れると <em>Game&nbsp;Over</em>／赤ヒーローを倒すと <em>Victory</em></li>
+    </ul>
+
+    <h2>操作方法</h2>
+    <ul>
+      <li>ユニットをクリック → <em>水色マス</em> 選択で移動。</li>
+      <li>赤ハイライトの敵で攻撃。ヒーラーは味方をクリックで回復 <em>(+5 HP)</em>。</li>
+      <li>選択解除：同じ駒 or 空白セルをクリック。</li>
+      <li>残アクションを放棄（パス）：<span class="keycap">Space</span> / <span class="keycap">P</span> か、ログ欄クリック。</li>
+    </ul>
+
+    <h2>地形効果</h2>
+    <table class="info">
+      <thead>
+        <tr><th>タイル</th><th>サンプル</th><th>移動コスト</th><th>防御補正</th><th>特殊効果</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Plain<br><small>平地</small></td>
+            <td><span class="tile-swatch plain"></span></td>
+            <td>1</td><td>0</td><td>-</td></tr>
+        <tr><td>Forest<br><small>森</small></td>
+            <td><span class="tile-swatch forest"></span></td>
+            <td>2</td><td>+1</td><td>隠密に適。遠距離 / ヒーラー好み</td></tr>
+        <tr><td>Mountain<br><small>山</small></td>
+            <td><span class="tile-swatch mount"></span></td>
+            <td>3</td><td>+2</td><td>高所。移動は重い</td></tr>
+        <tr><td>Hill<br><small>丘</small></td>
+            <td><span class="tile-swatch hill"></span></td>
+            <td>2</td><td>+1</td><td>上に立つ<strong>弓/魔</strong>は射程+1</td></tr>
+        <tr><td>Road<br><small>道</small></td>
+            <td><span class="tile-swatch road"></span></td>
+            <td>1</td><td>0</td><td>今後 騎馬ボーナス予定</td></tr>
+        <tr><td>Fort<br><small>砦</small></td>
+            <td><span class="tile-swatch fort"></span></td>
+            <td>2</td><td>+3</td><td><strong>ターン開始時 HP +2</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h2>ユニット一覧</h2>
+    <table class="info">
+      <thead>
+        <tr><th>ユニット</th><th>記号</th><th>移動</th><th>射程</th>
+            <th>攻撃 / 回復</th><th>HP</th><th>特徴</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hero<br><small>英雄</small></td><td class="sym">△</td><td>2</td><td>1</td><td>5</td><td>20</td><td>指揮官。倒されると敗北</td></tr>
+        <tr><td>Archer<br><small>射手</small></td><td class="sym">▲</td><td>2</td><td>2 (+丘)</td><td>4</td><td>12</td><td>遠距離専</td></tr>
+        <tr><td>Soldier<br><small>ソルジャー</small></td><td class="sym">○</td><td>3</td><td>1</td><td>3</td><td>15</td><td>バランス型</td></tr>
+        <tr><td>Mage<br><small>魔法使い</small></td><td class="sym">◆</td><td>2</td><td>1-2 (+丘)</td><td>6</td><td>10</td><td>高火力</td></tr>
+        <tr><td>ArmorKnight<br><small>重騎</small></td><td class="sym">■</td><td>1</td><td>1</td><td>4</td><td>25</td><td>高防御・前線壁</td></tr>
+        <tr><td>Thief<br><small>盗賊</small></td><td class="sym">☓</td><td>4</td><td>1</td><td>2</td><td>12</td><td>高機動</td></tr>
+        <tr><td>Cavalier<br><small>騎兵</small></td><td class="sym">♞</td><td>4 (道◎)</td><td>1</td><td>4</td><td>18</td><td>機動突撃</td></tr>
+        <tr><td>Healer<br><small>僧侶</small></td><td class="sym">♡</td><td>2</td><td>1 (回復)</td><td>0 / +5</td><td>14</td><td>支援役</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== ログ（クリックでパス） ================================ -->
+  <div id="log" style="min-height:1.6rem;">ロード中…</div>
+
+  <!-- ===== 盤面 ================================================== -->
+  <div id="mapArea"></div>
+
+  <!-- ========= エントリポイント (type="module") ================= -->
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
