@@ -85,7 +85,7 @@
     "minRange": 1,
     "maxRange": 1,
     "atk": 0,
-    "heal": 5,
+    "heal": 2,
     "maxHp": 14
   }
 }
